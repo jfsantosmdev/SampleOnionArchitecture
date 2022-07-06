@@ -4,7 +4,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Application.Features.Clients.Commands
+namespace Application.Features.Clients.Commands.CreateClientCommand
 {
     public class CreateClientCommand : IRequest<Response<int>>
     {

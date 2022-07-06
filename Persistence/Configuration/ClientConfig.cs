@@ -24,7 +24,7 @@ namespace Persistence.Configuration
                 .IsRequired();
 
             builder.Property(p => p.Phone)
-                .HasMaxLength(10)
+                .HasMaxLength(9)
                 .IsRequired();
 
             builder.Property(p => p.Email)
