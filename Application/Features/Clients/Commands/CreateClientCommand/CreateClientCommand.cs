@@ -1,4 +1,7 @@
-﻿using Application.Wrappers;
+﻿using Application.Interfaces;
+using Application.Wrappers;
+using AutoMapper;
+using Domain.Entities;
 using MediatR;
 using System;
 using System.Threading;
@@ -18,9 +21,21 @@ namespace Application.Features.Clients.Commands.CreateClientCommand
 
     public class CreateClientCommandHandler : IRequestHandler<CreateClientCommand, Response<int>>
     {
-        public Task<Response<int>> Handle(CreateClientCommand request, CancellationToken cancellationToken)
+        private readonly IRepositoryAsync<Client> _repositoryAsync;
+        private readonly IMapper _mapper;
+
+        public CreateClientCommandHandler(IRepositoryAsync<Client> repositoryAsync, IMapper mapper)
         {
-            throw new NotImplementedException();
+            _repositoryAsync = repositoryAsync;
+            _mapper = mapper;
+        }
+
+        public async Task<Response<int>> Handle(CreateClientCommand request, CancellationToken cancellationToken)
+        {
+            var newRecord = _mapper.Map<Client>(request);
+            var data = await _repositoryAsync.AddAsync(newRecord);
+
+            return new Response<int>(data.Id);
         }
     }
 }

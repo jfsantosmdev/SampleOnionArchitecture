@@ -16,8 +16,11 @@
   <ItemGroup>
     <Folder Include="DTOs\" />
     <Folder Include="Filters\" />
-    <Folder Include="Mappings\" />
     <Folder Include="Wrappers\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Domain\Domain.csproj" />
   </ItemGroup>
 
 </Project>
