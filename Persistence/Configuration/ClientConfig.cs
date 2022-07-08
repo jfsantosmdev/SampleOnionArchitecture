@@ -20,7 +20,7 @@ namespace Persistence.Configuration
                 .HasMaxLength(80)
                 .IsRequired();
 
-            builder.Property(p => p.BrithDate)
+            builder.Property(p => p.BirthDate)
                 .IsRequired();
 
             builder.Property(p => p.Phone)
