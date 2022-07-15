@@ -1,11 +1,14 @@
 ﻿using FluentValidation;
 
-namespace Application.Features.Clients.Commands.CreateClientCommand
+namespace Application.Features.Clients.Commands.UpdateClientCommand
 {
-    public class CreateClientCommandValidator : AbstractValidator<CreateClientCommand>
+    public class UpdateClientCommandValidator : AbstractValidator<UpdateClientCommand>
     {
-        public CreateClientCommandValidator()
+        public UpdateClientCommandValidator()
         {
+            RuleFor(p => p.Id)
+                .NotEmpty().WithMessage("The {PropertyName} field is required");
+
             RuleFor(p => p.FirstName)
                 .NotEmpty().WithMessage("The {PropertyName} field is required.")
                 .MaximumLength(80).WithMessage("The {PropertyName} must be less than {MaxLngth} characters.");
@@ -30,7 +33,6 @@ namespace Application.Features.Clients.Commands.CreateClientCommand
             RuleFor(p => p.Address)
                 .NotEmpty().WithMessage("The {PropertyName} field is required")
                 .MaximumLength(120).WithMessage("The {PropertyName} must be less than {MaxLngth} characters.");
-
         }
     }
 }
