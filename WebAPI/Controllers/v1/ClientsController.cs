@@ -9,10 +9,10 @@ using System.Threading.Tasks;
 namespace WebAPI.Controllers.v1
 {
     [ApiVersion("1.0")]
-    public class ClientController : BaseApiController
+    public class ClientsController : BaseApiController
     {
         //GET: api/<controller>
-        [HttpGet]
+        [HttpGet()]
         public async Task<IActionResult> Get([FromQuery]GetAllClientsParameters filter)
         {
             return Ok(await Mediator.Send(new GetAllClientsQuery
