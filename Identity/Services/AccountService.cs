@@ -4,12 +4,16 @@ using Application.Exceptions;
 using Application.Interfaces;
 using Application.Wrappers;
 using Domain.Settings;
+using Identity.Helpers;
 using Identity.Models;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
+using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -35,7 +39,7 @@ namespace Identity.Services
         public async Task<Response<AuthenticationResponse>> AuthenticateAsync(AuthenticationRequest request, string ipAddress)
         {
             var user = await _userManager.FindByEmailAsync(request.Email);
-            if (user != null)
+            if (user == null)
             {
                 throw new ApiException($"Email {request.Email} doesn't exists");
             }
@@ -46,8 +50,21 @@ namespace Identity.Services
                 throw new ApiException($"Invalid credentials");
             }
 
-            JwtSecurityToken token = await GenerateJWToken(user);
-            return null;
+            JwtSecurityToken jwtSecurityToken = await GenerateJWToken(user);
+            AuthenticationResponse response = new AuthenticationResponse();
+            response.Id = user.Id;
+            response.JWToken = new JwtSecurityTokenHandler().WriteToken(jwtSecurityToken);
+            response.Email = user.Email;
+            response.UserName = user.UserName;
+
+            var rolesList = await _userManager.GetRolesAsync(user).ConfigureAwait(false);
+            response.Roles = rolesList.ToList();
+            response.IsVerified = user.EmailConfirmed;
+
+            var refreshToken = GenerateRefreshToken(ipAddress);
+            response.RefreshToken = refreshToken.Token;
+
+            return new Response<AuthenticationResponse>(response, $"Authenticated user {user.UserName}");
         }
 
         public async Task<Response<string>> RegisterAsync(RegisterRequest request, string origin)
@@ -90,7 +107,64 @@ namespace Identity.Services
 
         private async Task<JwtSecurityToken> GenerateJWToken(ApplicationUser user)
         {
-            return null;
+            var userClaims = await _userManager.GetClaimsAsync(user);
+            var roles = await _userManager.GetRolesAsync(user);
+
+            var roleClaims = new List<Claim>();
+            foreach(var role in roles)
+            {
+                roleClaims.Add(new Claim(ClaimTypes.Role, role));
+            }
+
+            string ipAddress = IpHelper.GetIpAddress();
+            var claims = new[]
+            {
+                new Claim(JwtRegisteredClaimNames.Sub, user.UserName),
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                new Claim(JwtRegisteredClaimNames.Email, user.Email),
+                new Claim("uid", user.Id),
+                new Claim("ip", ipAddress)
+            }
+            .Union(userClaims)
+            .Union(roleClaims);
+
+            var symetricSecurityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.Key));
+            var signingCredentials = new SigningCredentials(symetricSecurityKey, SecurityAlgorithms.HmacSha256);
+
+            var jwtSecurityToken = new JwtSecurityToken(
+                issuer: _jwtSettings.Issuer,
+                audience: _jwtSettings.Audience,
+                claims: claims,
+                expires: DateTime.Now.AddMinutes(_jwtSettings.DurationInMinutes),
+                signingCredentials: signingCredentials
+                );
+
+            return jwtSecurityToken;
+        }
+
+        private RefreshToken GenerateRefreshToken(string ipAddress)
+        {
+            return new RefreshToken
+            {
+                Token = RandomTokenString(),
+                Expires = DateTime.Now.AddDays(7),
+                Created = DateTime.Now,
+                CreatedByIp = ipAddress
+            };
+        }
+
+        private string RandomTokenString()
+        {
+            var randomNumber = new byte[32];
+            string refreshToken = "";
+
+            using (var rng = RandomNumberGenerator.Create())
+            {
+                rng.GetBytes(randomNumber);
+                refreshToken = Convert.ToBase64String(randomNumber);
+            }
+
+            return refreshToken;
         }
     }
 }
