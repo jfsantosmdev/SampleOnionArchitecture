@@ -3,6 +3,7 @@ using Application.Features.Clients.Commands.DeleteClientCommand;
 using Application.Features.Clients.Commands.UpdateClientCommand;
 using Application.Features.Clients.Queries.GetAllClients;
 using Application.Features.Clients.Queries.GetClientById;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 
@@ -13,7 +14,8 @@ namespace WebAPI.Controllers.v1
     {
         //GET: api/<controller>
         [HttpGet()]
-        public async Task<IActionResult> Get([FromQuery]GetAllClientsParameters filter)
+        [Authorize(Roles = "Admin, User")]
+        public async Task<IActionResult> Get([FromQuery] GetAllClientsParameters filter)
         {
             return Ok(await Mediator.Send(new GetAllClientsQuery
             {
@@ -26,6 +28,7 @@ namespace WebAPI.Controllers.v1
 
         //GET: api/<controller>/5
         [HttpGet("{id}")]
+        [Authorize(Roles = "Admin, User")]
         public async Task<IActionResult> Get(int id)
         {
             return Ok(await Mediator.Send(new GetClientByIdQuery { Id = id }));
@@ -33,12 +36,14 @@ namespace WebAPI.Controllers.v1
 
         //POST api/<controller>
         [HttpPost]
+        [Authorize(Roles = "Admin, User")]
         public async Task<IActionResult> Post(CreateClientCommand command)
         {
             return Ok(await Mediator.Send(command));
         }
 
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin, User")]
         public async Task<IActionResult> Put(int id, UpdateClientCommand command)
         {
             if(id != command.Id)
@@ -48,6 +53,7 @@ namespace WebAPI.Controllers.v1
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(int id)
         {
             return Ok(await Mediator.Send(new DeleteClientCommand { Id = id }));
