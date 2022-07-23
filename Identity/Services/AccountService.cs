@@ -7,15 +7,12 @@ using Domain.Settings;
 using Identity.Helpers;
 using Identity.Models;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using System;
-using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace Identity.Services
 {
@@ -27,12 +24,12 @@ namespace Identity.Services
         private readonly JWTSettings _jwtSettings;
         private readonly IDateTimeService _dateTimeService;
 
-        public AccountService(UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager, SignInManager<ApplicationUser> signInManager, JWTSettings jwtSettings, IDateTimeService dateTimeService)
+        public AccountService(UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager, SignInManager<ApplicationUser> signInManager, IOptions<JWTSettings> jwtSettings, IDateTimeService dateTimeService)
         {
             _userManager = userManager;
             _roleManager = roleManager;
             _signInManager = signInManager;
-            _jwtSettings = jwtSettings;
+            _jwtSettings = jwtSettings.Value;
             _dateTimeService = dateTimeService;
         }
 
@@ -70,7 +67,7 @@ namespace Identity.Services
         public async Task<Response<string>> RegisterAsync(RegisterRequest request, string origin)
         {
             var userNameExists = await _userManager.FindByNameAsync(request.UserName);
-            if(userNameExists != null)
+            if (userNameExists != null)
             {
                 throw new ApiException($"Username {request.UserName} already exists");
             };
@@ -86,7 +83,7 @@ namespace Identity.Services
             };
 
             var emailExists = await _userManager.FindByEmailAsync(request.Email);
-            if(emailExists != null)
+            if (emailExists != null)
             {
                 throw new ApiException($"Email {request.Email} already exists");
             }
@@ -111,7 +108,7 @@ namespace Identity.Services
             var roles = await _userManager.GetRolesAsync(user);
 
             var roleClaims = new List<Claim>();
-            foreach(var role in roles)
+            foreach (var role in roles)
             {
                 roleClaims.Add(new Claim(ClaimTypes.Role, role));
             }
@@ -155,7 +152,7 @@ namespace Identity.Services
 
         private string RandomTokenString()
         {
-            var randomNumber = new byte[32];
+            var randomNumber = new byte[40];
             string refreshToken = "";
 
             using (var rng = RandomNumberGenerator.Create())

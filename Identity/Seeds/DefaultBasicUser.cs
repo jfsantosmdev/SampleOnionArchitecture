@@ -11,7 +11,7 @@ namespace Identity.Seeds
             //Seed Users
             var defaultUser = new ApplicationUser
             {
-                UserName = "Admin",
+                UserName = "User",
                 Email = "basic@test.com",
                 FirstName = "Juan Fernando",
                 LastName = "Santos",
